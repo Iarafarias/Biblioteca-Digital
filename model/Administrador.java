@@ -1,73 +1,41 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import services.BibliotecaService;
 
-class Biblioteca {
-    private List<Livro> livros;
+public class Administrador extends Usuario {
+    private BibliotecaService bibliotecaService;
 
-    public Biblioteca() {
-        this.livros = new ArrayList<>();
+    public Administrador(BibliotecaService bibliotecaService, String nome, String id) {
+        super(nome, id, "administrador");
+        this.bibliotecaService = bibliotecaService;
     }
 
+    // Adiciona um livro ao sistema
     public void adicionarLivro(Livro livro) {
-        livros.add(livro);
+        if (livro == null) {
+            throw new IllegalArgumentException("O livro não pode ser nulo.");
+        }
+        bibliotecaService.cadastrarLivro(livro);
     }
 
-    public void removerLivro(Livro livro) {
-        livros.remove(livro);
-    }
-
-    public void atualizarLivro(Livro livroAtualizado) {
-        Optional<Livro> livroExiste = livros.stream()
-                .filter(Livro -> Livro.getIsbn().equals(livroAtualizado.getIsbn()))
-                .findFirst();
-
-        if (livroExiste.isPresent()) {
-            Livro livroExistente = livroExiste.get();
-            livroExistente.setTitulo(livroAtualizado.getTitulo());
-            livroExistente.setAutor(livroAtualizado.getAutor());
-            livroExistente.setEstoque(livroAtualizado.getEstoque());
-            livroExistente.setCategoria(livroAtualizado.getCategoria());
+    // Remove um livro pelo ISBN
+    public void removerLivro(String isbn) {
+        if (isbn == null || isbn.trim().isEmpty()) {
+            throw new IllegalArgumentException("O ISBN não pode ser nulo ou vazio.");
+        }
+        Livro livro = bibliotecaService.buscarLivro(isbn);
+        if (livro != null) {
+            bibliotecaService.removerLivro(isbn);
         } else {
-            System.out.println("Livro com ISBN " + livroAtualizado.getIsbn() + " não encontrado.");
+            System.out.println("Livro com ISBN " + isbn + " não encontrado.");
         }
     }
 
-    // Busca um livro pelo ISBN
-    public Livro buscarLivroPorIsbn(String isbn) {
-        return livros.stream()
-                .filter(livro -> livro.getIsbn().equals(isbn))
-                .findFirst()
-                .orElse(null);
+    // Atualiza as informações de um livro
+    public void atualizarLivro(Livro livroAtualizado) {
+        if (livroAtualizado == null) {
+            throw new IllegalArgumentException("O livro atualizado não pode ser nulo.");
+        }
+        bibliotecaService.atualizarLivro(livroAtualizado);
     }
-
-    // Lista todos os livros
-    public List<Livro> listarLivros() {
-        return new ArrayList<>(livros);
-    }
-}
-
-public class Administrador extends Usuario {
-
-    public Administrador(String nome, String id) {
-        super(nome, id, "administrador");
-    }
-
-    // Adiciona o livro ao acervo da biblioteca
-    public void adicionarLivro(Livro livro, Biblioteca biblioteca) {
-        biblioteca.adicionarLivro(livro);
-    }
-
-    // Remover livro do acervo
-    public void removerLivro(Livro livro, Biblioteca biblioteca) {
-        biblioteca.removerLivro(livro);
-    }
-
-    // Atualizar o acervo
-    public void atualizarLivro(Livro livro, Biblioteca biblioteca) {
-        biblioteca.atualizarLivro(livro);
-    }
-
 }

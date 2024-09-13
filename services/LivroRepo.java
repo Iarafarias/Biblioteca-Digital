@@ -1,8 +1,10 @@
-package servicos;
+package services;
 
 import model.Livro;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LivroRepo {
     private Map<String, Livro> livros = new HashMap<>();
@@ -19,5 +21,7 @@ public class LivroRepo {
         livros.remove(isbn);
     }
 
-    // Outros métodos de manipulação
+    public List<Livro> listarLivros() {
+        return new ArrayList<>(livros.values());
+    }
 }

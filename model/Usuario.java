@@ -1,12 +1,9 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Usuario {
     private String nome;
-    private String id; // identifica o usuário
-    private String perfil; // (leitor ou adm)
+    private String id;
+    private String perfil;
 
     public Usuario(String nome, String id, String perfil) {
         this.nome = nome;
@@ -14,11 +11,11 @@ public class Usuario {
         this.perfil = perfil;
     }
 
-    public String getNome() { // Retorna o valor do atributo na classe
+    public String getNome() {
         return nome;
     }
 
-    public void setNome(String nome) { // Define ou altera o valor do atributo na classe
+    public void setNome(String nome) {
         this.nome = nome;
     }
 
@@ -36,29 +33,5 @@ public class Usuario {
 
     public void setPerfil(String perfil) {
         this.perfil = perfil;
-    }
-}
-
-class Leitor extends Usuario {
-    private List<Emprestimo> historicoDeEmprestimos;
-
-    public Leitor(String nome, String id) {
-        super(nome, id, "leitor");
-        this.historicoDeEmprestimos = new ArrayList<>();
-    }
-
-    // Adiciona o empréstimo ao histórico do leitor
-    public void adicionarEmprestimo(Emprestimo emprestimo) {
-        historicoDeEmprestimos.add(emprestimo);
-    }
-
-    // Remover um empréstimo do histórico
-    public void removerEmprestimo(Emprestimo emprestimo) {
-        historicoDeEmprestimos.remove(emprestimo);
-    }
-
-    // Ver o histórico completo de empréstimos
-    public List<Emprestimo> verHistorico() {
-        return historicoDeEmprestimos;
     }
 }
