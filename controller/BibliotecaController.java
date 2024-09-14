@@ -13,7 +13,7 @@ public class BibliotecaController {
 
     public void adicionarLivro(Livro livro) throws BibliotecaException {
         if (livro == null) {
-            throw new BibliotecaException("O livro não pode ser nulo.");
+            throw new BibliotecaException("O livro precisa ser válido.");
         }
         bibliotecaService.cadastrarLivro(livro);
     }
@@ -34,7 +34,7 @@ public class BibliotecaController {
 
     public void atualizarLivro(Livro livro) throws BibliotecaException {
         if (livro == null) {
-            throw new BibliotecaException("O livro não pode ser nulo.");
+            throw new BibliotecaException("O livro precisa ser válido.");
         }
         bibliotecaService.atualizarLivro(livro);
     }

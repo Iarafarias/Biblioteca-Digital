@@ -22,4 +22,14 @@ public class Leitor extends Usuario {
     public List<Emprestimo> verHistorico() {
         return historicoDeEmprestimos;
     }
+
+    // Método para encontrar um empréstimo por livro
+    public Emprestimo getEmprestimoPorLivro(Livro livro) {
+        for (Emprestimo emprestimo : historicoDeEmprestimos) {
+            if (emprestimo.getLivro().equals(livro)) {
+                return emprestimo;
+            }
+        }
+        return null; // Retorna null se o empréstimo não for encontrado
+    }
 }

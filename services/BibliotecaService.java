@@ -13,7 +13,7 @@ public class BibliotecaService {
 
     public void cadastrarLivro(Livro livro) {
         if (livro == null) {
-            throw new IllegalArgumentException("O livro não pode ser nulo.");
+            throw new IllegalArgumentException("O livro precisa ser válido");
         }
         livroRepositorio.adicionarLivro(livro);
     }
