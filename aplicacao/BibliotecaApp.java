@@ -39,13 +39,11 @@ public class BibliotecaApp {
     public void run() {
         boolean running = true;
 
-        // Verifica se há pelo menos um usuário cadastrado
         if (usuarios.listarUsuarios().isEmpty()) {
             System.out.println("Nenhum usuário cadastrado. Por favor, cadastre um Administrador.");
             cadastrarAdministrador(); // Força o cadastro de um Administrador se não houver nenhum usuário
         }
 
-        // Fluxo normal do sistema
         while (running) {
             try {
                 if (usuarioLogado == null) {
@@ -57,9 +55,11 @@ public class BibliotecaApp {
 
                     if (escolha == 1) {
                         login();
-                    } else {
+                    } else if (escolha == 2) {
                         running = false;
                         System.out.println("Saindo do sistema...");
+                    } else {
+                        System.out.println("Opção inválida. Tente novamente.");
                     }
                 } else {
                     System.out.println("\nBem-vindo, " + usuarioLogado.getNome());
@@ -122,6 +122,7 @@ public class BibliotecaApp {
                     System.out.println("\nOpção inválida. Tente novamente.");
             }
         }
+        scanner.close();
     }
 
     private void exibirMenuLeitor() {
@@ -390,8 +391,6 @@ public class BibliotecaApp {
             String isbn = scanner.nextLine();
             System.out.print("ID do Leitor: ");
             String idLeitor = scanner.nextLine();
-            System.out.println("Data do empréstimo: ");
-            LocalDate dataEmprestimo = LocalDate.parse(scanner.nextLine());
             System.out.print("Data de Devolução (yyyy-MM-dd): ");
             LocalDate dataDevolucao = LocalDate.parse(scanner.nextLine());
 
@@ -442,8 +441,13 @@ public class BibliotecaApp {
             Leitor leitor = (Leitor) usuario;
             Emprestimo emprestimo = leitor.getEmprestimoPorLivro(livro);
             if (emprestimo != null) {
-                bibliotecaService.devolverLivro(emprestimo);
-                System.out.println("Livro devolvido com sucesso!");
+                try {
+                    bibliotecaService.devolverLivro(emprestimo);
+                    System.out.println("Livro devolvido com sucesso!");
+                } catch (BibliotecaException e) {
+                    // Trata a exceção BibliotecaException
+                    System.out.println("Erro ao devolver o livro: " + e.getMessage());
+                }
             } else {
                 System.out.println("Empréstimo não encontrado.");
             }

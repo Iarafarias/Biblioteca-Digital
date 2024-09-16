@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Leitor extends Usuario {
     private List<Emprestimo> historicoDeEmprestimos;
+    private List<Emprestimo> emprestimos;
 
     public Leitor(String nome, String id) {
         super(nome, id, "leitor");
@@ -17,6 +18,13 @@ public class Leitor extends Usuario {
 
     public void removerEmprestimo(Emprestimo emprestimo) {
         historicoDeEmprestimos.remove(emprestimo);
+    }
+
+    public boolean temEmprestimo(Emprestimo emprestimo) {
+        if (emprestimo == null) {
+            return false;
+        }
+        return emprestimos.contains(emprestimo);
     }
 
     public List<Emprestimo> verHistorico() {

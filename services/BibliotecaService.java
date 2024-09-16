@@ -79,6 +79,17 @@ public class BibliotecaService {
 
     // Método para emprestar um livro
     public void emprestarLivro(String isbn, String usuarioId, LocalDate dataDevolucao) throws BibliotecaException {
+        // Verifica se algum dos parâmetros está nulo
+        if (isbn == null || isbn.trim().isEmpty()) {
+            throw new BibliotecaException("O ISBN não pode ser nulo ou vazio.");
+        }
+        if (usuarioId == null || usuarioId.trim().isEmpty()) {
+            throw new BibliotecaException("O ID do usuário não pode ser nulo ou vazio.");
+        }
+        if (dataDevolucao == null) {
+            throw new BibliotecaException("A data de devolução não pode ser nula.");
+        }
+
         Livro livro = buscarLivro(isbn);
         Usuario usuario = buscarUsuario(usuarioId);
 
@@ -99,7 +110,10 @@ public class BibliotecaService {
 
         // Realiza o empréstimo
         Leitor leitor = (Leitor) usuario;
-        Emprestimo emprestimo = new Emprestimo(livro, leitor, dataDevolucao, null);
+        LocalDate dataEmprestimo = LocalDate.now(); // Data de hoje como data de empréstimo
+        Emprestimo emprestimo = new Emprestimo(livro, leitor, dataEmprestimo, dataDevolucao);
+
+        // Adiciona o empréstimo ao leitor e à lista de empréstimos
         leitor.adicionarEmprestimo(emprestimo);
         emprestimos.add(emprestimo);
 
@@ -115,20 +129,51 @@ public class BibliotecaService {
         livroRepositorio.adicionarLivro(livro);
 
         System.out.println("Livro '" + livro.getTitulo() + "' emprestado com sucesso para " + leitor.getNome() + ".");
+
+        // Verificação
+        System.out.println("Estado final do livro após empréstimo: ");
+        System.out.println("Título: " + livro.getTitulo());
+        System.out.println("Estoque: " + livro.getEstoque());
+        System.out.println("Disponível: " + livro.isDisponivel());
     }
 
     // Método para devolver um livro
-    public void devolverLivro(Emprestimo emprestimo) {
+    public void devolverLivro(Emprestimo emprestimo) throws BibliotecaException {
         if (emprestimo == null) {
             throw new IllegalArgumentException("O empréstimo não pode ser nulo.");
         }
+
         Livro livro = emprestimo.getLivro();
         Usuario usuario = emprestimo.getLeitor();
-        livro.setEstoque(livro.getEstoque() + 1); // Atualiza o estoque
-        livro.setDisponivel(true); // Marca o livro como disponível
-        ((Leitor) usuario).removerEmprestimo(emprestimo);
+
+        // Verifica se o livro está presente na biblioteca
+        Livro livroNoRepositorio = livroRepositorio.buscarLivroPorIsbn(livro.getIsbn());
+        if (livroNoRepositorio == null) {
+            throw new BibliotecaException("O livro não está registrado na biblioteca.");
+        }
+
+        // Verifica se o usuário possui o livro emprestado
+        if (usuario == null || !(usuario instanceof Leitor)) {
+            throw new BibliotecaException("O usuário não é um leitor válido.");
+        }
+
+        Leitor leitor = (Leitor) usuario;
+        if (!leitor.temEmprestimo(emprestimo)) {
+            throw new BibliotecaException("O usuário não tem este livro emprestado.");
+        }
+
+        // Atualiza o estoque do livro e a disponibilidade
+        livroNoRepositorio.setEstoque(livroNoRepositorio.getEstoque() + 1);
+        livroNoRepositorio.setDisponivel(true);
+
+        // Remove o empréstimo do leitor
+        leitor.removerEmprestimo(emprestimo);
+
+        // Define a data de devolução real
         emprestimo.setDataDevolucaoReal(LocalDate.now());
-        livroRepositorio.adicionarLivro(livro); // Atualiza o livro no repositório
+
+        // Atualiza o livro no repositório
+        livroRepositorio.adicionarLivro(livroNoRepositorio);
     }
 
     // Método para listar todos os livros cadastrados

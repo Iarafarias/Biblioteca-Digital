@@ -15,6 +15,14 @@ public class Relatorio {
     // Construtor que aceita BibliotecaService
     public Relatorio(BibliotecaService bibliotecaService) {
         this.bibliotecaService = bibliotecaService;
+        this.livros = bibliotecaService.listarLivros();
+        this.emprestimos = bibliotecaService.listarEmprestimos();
+    }
+
+    public List<Livro> obterLivrosDisponiveis() {
+        return bibliotecaService.listarLivros().stream()
+                .filter(Livro::isDisponivel)
+                .collect(Collectors.toList());
     }
 
     // Construtor que aceita Map e List
