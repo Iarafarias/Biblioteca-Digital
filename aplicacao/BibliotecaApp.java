@@ -6,8 +6,10 @@ import model.Livro;
 import model.Emprestimo;
 import model.Usuario;
 import services.BibliotecaService;
+import services.Relatorio;
+import services.UsuarioRepo;
+import ExcepUtils.BibliotecaException;
 import ExcepUtils.Notificacao;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
@@ -16,12 +18,17 @@ public class BibliotecaApp {
 
     private BibliotecaService bibliotecaService;
     private Notificacao notificacao;
+    private Relatorio relatorio;
+    private Usuario usuarioLogado;
+    private UsuarioRepo usuarios;
     private Scanner scanner;
 
     public BibliotecaApp() {
         bibliotecaService = new BibliotecaService();
+        relatorio = new Relatorio(bibliotecaService);
         notificacao = new Notificacao();
         scanner = new Scanner(System.in);
+        usuarios = new UsuarioRepo(); // Inicializa os usuários
     }
 
     public static void main(String[] args) {
@@ -32,14 +39,64 @@ public class BibliotecaApp {
     public void run() {
         boolean running = true;
 
+        // Verifica se há pelo menos um usuário cadastrado
+        if (usuarios.listarUsuarios().isEmpty()) {
+            System.out.println("Nenhum usuário cadastrado. Por favor, cadastre um Administrador.");
+            cadastrarAdministrador(); // Força o cadastro de um Administrador se não houver nenhum usuário
+        }
+
+        // Fluxo normal do sistema
         while (running) {
-            System.out.println("Bem-vindo ao Sistema de Biblioteca");
-            System.out.println("1. Cadastro de Usuários");
+            try {
+                if (usuarioLogado == null) {
+                    System.out.println("1. Login");
+                    System.out.println("2. Sair");
+                    System.out.print("\nEscolha uma opção: ");
+                    int escolha = scanner.nextInt();
+                    scanner.nextLine(); // Consome a nova linha
+
+                    if (escolha == 1) {
+                        login();
+                    } else {
+                        running = false;
+                        System.out.println("Saindo do sistema...");
+                    }
+                } else {
+                    System.out.println("\nBem-vindo, " + usuarioLogado.getNome());
+                    if (usuarioLogado instanceof Administrador) {
+                        exibirMenuAdministrador();
+                    } else if (usuarioLogado instanceof Leitor) {
+                        exibirMenuLeitor();
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("\nErro: " + e.getMessage());
+            }
+        }
+    }
+
+    private void login() {
+        System.out.print("\nID do Usuário: ");
+        String id = scanner.nextLine();
+
+        Usuario usuario = bibliotecaService.buscarUsuario(id);
+        if (usuario != null) {
+            usuarioLogado = usuario;
+            System.out.println("\nLogin bem-sucedido. Bem-vindo, " + usuario.getNome() + "!\n");
+        } else {
+            System.out.println("\nUsuário não encontrado.");
+        }
+    }
+
+    private void exibirMenuAdministrador() {
+        boolean running = true;
+        while (running) {
+            System.out.println("1. Gestão de Usuários");
             System.out.println("2. Gestão de Livros");
             System.out.println("3. Empréstimos e Devoluções");
             System.out.println("4. Relatórios e Estatísticas");
             System.out.println("5. Sair");
-            System.out.print("Escolha uma opção: ");
+            System.out.print("\nEscolha uma opção: ");
 
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consome a nova linha
@@ -55,16 +112,78 @@ public class BibliotecaApp {
                     gerenciarEmprestimos();
                     break;
                 case 4:
-                    gerarRelatorios();
+                    gerarRelatorios(); // Somente administradores podem acessar essa função
                     break;
                 case 5:
+                    usuarioLogado = null; // Desloga o usuário
                     running = false;
-                    System.out.println("Saindo do sistema...");
                     break;
                 default:
-                    System.out.println("Opção inválida. Tente novamente.");
+                    System.out.println("\nOpção inválida. Tente novamente.");
             }
         }
+    }
+
+    private void exibirMenuLeitor() {
+        boolean running = true;
+        while (running) {
+            System.out.println("1. Perfil de Usuário");
+            System.out.println("2. Empréstimos e Devoluções");
+            System.out.println("3. Sair");
+            System.out.print("\nEscolha uma opção: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consome a nova linha
+
+            switch (choice) {
+                case 1:
+                    perfilUsuario();
+                    break;
+                case 2:
+                    gerenciarEmprestimos(); // Leitor pode emprestar e devolver livros
+                    break;
+                case 3:
+                    usuarioLogado = null; // Desloga o usuário
+                    running = false;
+                    break;
+                default:
+                    System.out.println("\nOpção inválida. Tente novamente.");
+            }
+        }
+    }
+
+    private void gerarRelatorios() {
+        System.out.println("\nRelatórios e Estatísticas\n");
+        System.out.println("1. Livros Mais Emprestados");
+        System.out.println("2. Estatísticas da Biblioteca");
+        System.out.print("Escolha uma opção: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice) {
+            case 1:
+                relatorioLivrosEmprestados();
+                break;
+            case 2:
+                estatisticasBiblioteca();
+                break;
+            default:
+                System.out.println("\nOpção inválida. Tente novamente.\n");
+        }
+    }
+
+    private void relatorioLivrosEmprestados() {
+        System.out.println("\nLivros Mais Emprestados:");
+        List<Livro> livrosMaisEmprestados = relatorio.gerarRelatorioLivrosMaisEmprestados(); // Corrigido
+        for (Livro livro : livrosMaisEmprestados) {
+            System.out.println(livro.getTitulo() + " - " + livro.getQuantEmprestimos() + " empréstimos.");
+        }
+    }
+
+    private void estatisticasBiblioteca() {
+        System.out.println("\nEstatísticas da Biblioteca:");
+        relatorio.gerarEstatisticasBiblioteca(); // Corrigido
     }
 
     private void gerenciarUsuarios() {
@@ -92,43 +211,30 @@ public class BibliotecaApp {
                 perfilUsuario();
                 break;
             default:
-                System.out.println("Opção inválida. Tente novamente.");
+                System.out.println("\nOpção inválida. Tente novamente.");
         }
     }
 
     private void cadastrarLeitor() {
-        System.out.print("Nome do Leitor: ");
+        System.out.print("\nNome do Leitor: ");
         String nome = scanner.nextLine();
-        System.out.print("ID do Leitor: ");
+        System.out.print("\nID do Leitor: ");
         String id = scanner.nextLine();
 
         Leitor leitor = new Leitor(nome, id);
         bibliotecaService.cadastrarUsuario(leitor);
-        System.out.println("Leitor cadastrado com sucesso!");
+        System.out.println("\nLeitor cadastrado com sucesso!");
     }
 
     private void cadastrarAdministrador() {
-        System.out.print("Nome do Administrador: ");
+        System.out.print("\nNome do Administrador: ");
         String nome = scanner.nextLine();
         System.out.print("ID do Administrador: ");
         String id = scanner.nextLine();
 
         Administrador administrador = new Administrador(bibliotecaService, nome, id);
         bibliotecaService.cadastrarUsuario(administrador);
-        System.out.println("Administrador cadastrado com sucesso!");
-    }
-
-    private void login() {
-        System.out.print("ID do Usuário: ");
-        String id = scanner.nextLine();
-
-        // Aqui você pode adicionar lógica para verificar a existência do usuário
-        Usuario usuario = bibliotecaService.buscarUsuario(id);
-        if (usuario != null) {
-            System.out.println("Login bem-sucedido. Bem-vindo, " + usuario.getNome() + "!");
-        } else {
-            System.out.println("Usuário não encontrado.");
-        }
+        System.out.println("\nAdministrador cadastrado com sucesso!\n");
     }
 
     private void perfilUsuario() {
@@ -138,9 +244,9 @@ public class BibliotecaApp {
         Usuario usuario = bibliotecaService.buscarUsuario(id);
         if (usuario instanceof Leitor) {
             Leitor leitor = (Leitor) usuario;
-            System.out.println("Perfil do Leitor: " + leitor.getNome());
+            System.out.println("\nPerfil do Leitor: " + leitor.getNome());
             List<Emprestimo> emprestimos = leitor.verHistorico();
-            System.out.println("Histórico de Empréstimos:");
+            System.out.println("\nHistórico de Empréstimos:");
             for (Emprestimo emprestimo : emprestimos) {
                 System.out.println(
                         emprestimo.getLivro().getTitulo() + " - Data de Empréstimo: " + emprestimo.getDataEmprestimo());
@@ -151,7 +257,7 @@ public class BibliotecaApp {
     }
 
     private void gerenciarLivros() {
-        System.out.println("Gestão de Livros");
+        System.out.println("\nGestão de Livros");
         System.out.println("1. Adicionar Livro");
         System.out.println("2. Remover Livro");
         System.out.println("3. Editar Livro");
@@ -278,6 +384,26 @@ public class BibliotecaApp {
         }
     }
 
+    private void emprestarLivro() {
+        try {
+            System.out.print("ISBN do Livro: ");
+            String isbn = scanner.nextLine();
+            System.out.print("ID do Leitor: ");
+            String idLeitor = scanner.nextLine();
+            System.out.println("Data do empréstimo: ");
+            LocalDate dataEmprestimo = LocalDate.parse(scanner.nextLine());
+            System.out.print("Data de Devolução (yyyy-MM-dd): ");
+            LocalDate dataDevolucao = LocalDate.parse(scanner.nextLine());
+
+            bibliotecaService.emprestarLivro(isbn, idLeitor, dataDevolucao);
+            System.out.println("Livro emprestado com sucesso!");
+            notificacao.enviarNotificacaoEmprestimo("Empréstimo realizado",
+                    "Você emprestou um livro. Data de devolução: " + dataDevolucao);
+        } catch (BibliotecaException e) {
+            System.out.println("Erro ao emprestar livro: " + e.getMessage());
+        }
+    }
+
     private void gerenciarEmprestimos() {
         System.out.println("Empréstimos e Devoluções");
         System.out.println("1. Emprestar Livro");
@@ -301,20 +427,6 @@ public class BibliotecaApp {
             default:
                 System.out.println("Opção inválida. Tente novamente.");
         }
-    }
-
-    private void emprestarLivro() {
-        System.out.print("ISBN do Livro: ");
-        String isbn = scanner.nextLine();
-        System.out.print("ID do Leitor: ");
-        String idLeitor = scanner.nextLine();
-        System.out.print("Data de Devolução (yyyy-MM-dd): ");
-        LocalDate dataDevolucao = LocalDate.parse(scanner.nextLine());
-
-        bibliotecaService.emprestarLivro(isbn, idLeitor, dataDevolucao);
-        System.out.println("Livro emprestado com sucesso!");
-        notificacao.enviarNotificacaoEmprestimo("Empréstimo realizado",
-                "Você emprestou um livro. Data de devolução: " + dataDevolucao);
     }
 
     private void devolverLivro() {
@@ -347,36 +459,5 @@ public class BibliotecaApp {
             System.out.println(emprestimo.getLivro().getTitulo() + " - " + emprestimo.getLeitor().getNome()
                     + " - Data de Empréstimo: " + emprestimo.getDataEmprestimo());
         }
-    }
-
-    private void gerarRelatorios() {
-        System.out.println("Relatórios e Estatísticas");
-        System.out.println("1. Livros Mais Emprestados");
-        System.out.println("2. Estatísticas da Biblioteca");
-        System.out.print("Escolha uma opção: ");
-
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consome a nova linha
-
-        switch (choice) {
-            case 1:
-                relatorioLivrosEmprestados();
-                break;
-            case 2:
-                estatisticasBiblioteca();
-                break;
-            default:
-                System.out.println("Opção inválida. Tente novamente.");
-        }
-    }
-
-    private void relatorioLivrosEmprestados() {
-        System.out.println("Livros Mais Emprestados:");
-        // Adicione lógica para gerar relatório de livros mais emprestados
-    }
-
-    private void estatisticasBiblioteca() {
-        System.out.println("Estatísticas da Biblioteca:");
-        // Adicione lógica para gerar estatísticas da biblioteca
     }
 }

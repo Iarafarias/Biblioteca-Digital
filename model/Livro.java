@@ -6,6 +6,8 @@ public class Livro {
     private String isbn;
     private int estoque;
     private String categoria;
+    private int quantEmprestimos; // Conta os empréstimos por livro
+    private boolean disponivel;
 
     public Livro(String titulo, String autor, String isbn, int estoque, String categoria) {
         this.titulo = titulo;
@@ -13,6 +15,8 @@ public class Livro {
         this.isbn = isbn;
         this.estoque = estoque;
         this.categoria = categoria;
+        this.disponivel = true;
+        this.quantEmprestimos = 0; // Inicializa em Zero
     }
 
     // Geovane 11/09/2024
@@ -56,9 +60,28 @@ public class Livro {
         this.categoria = categoria;
     }
 
+    // Getter para verificar se o livro está disponível
+    public boolean isDisponivel() {
+        return disponivel;
+    }
+
+    // Setter para mudar o status de disponibilidade do livro
+    public void setDisponivel(boolean disponivel) {
+        this.disponivel = disponivel;
+    }
+
+    public int getQuantEmprestimos() {
+        return quantEmprestimos;
+    }
+
+    public void somarEmprestimos() {
+        quantEmprestimos++;
+    }
+
     // Método para exibir as informações do livro
     public String exibirInformacoes() {
-        return "Título: " + titulo + ", Autor: " + autor + ", ISBN: " + isbn + ", Quantidade: " + estoque
-                + ", Categoria: " + categoria;
+        return "Título: " + titulo + "\nAutor: " + autor + "\nISBN: " + isbn + "\nQuantidade: " + estoque
+                + "Categoria: " + categoria + "Disponível:" + disponivel + "\nQuantidade de empréstimos realizados: "
+                + quantEmprestimos;
     }
 }
